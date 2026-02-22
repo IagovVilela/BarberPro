@@ -53,7 +53,8 @@ export default function FinanceiroPage() {
             const jspdfModule = await import('jspdf');
             const jsPDF = jspdfModule.default || jspdfModule.jsPDF;
             if (!jsPDF) { addToast('Erro ao carregar jsPDF', 'error'); return; }
-            await import('jspdf-autotable');
+            const autoTableModule = await import('jspdf-autotable');
+            const autoTable = autoTableModule.default;
             const doc = new jsPDF();
             doc.setFontSize(18); doc.text('Relatório Financeiro - BarberPro', 14, 22);
             doc.setFontSize(11); doc.text(`Período: ${startDate} a ${endDate}`, 14, 32);
@@ -63,8 +64,8 @@ export default function FinanceiroPage() {
             const rows = transactions.map((t: Transaction) => [
                 new Date(t.createdAt).toLocaleDateString('pt-BR'), t.type === 'entrada' ? 'Entrada' : 'Saída',
                 t.category, t.description, t.paymentMethod || '-', `R$ ${t.amount.toFixed(2)}`]);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (doc as any).autoTable({
+
+            autoTable(doc, {
                 startY: 70, head: [['Data', 'Tipo', 'Categoria', 'Descrição', 'Pagamento', 'Valor']], body: rows, styles: { fontSize: 9 }
             });
             doc.save(`relatorio-${startDate}-${endDate}.pdf`);
