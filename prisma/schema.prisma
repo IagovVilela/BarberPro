@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("barbeiro") // admin, barbeiro, recepcao
+  avatar    String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Client {
+  id           String        @id @default(cuid())
+  name         String
+  phone        String?
+  whatsapp     String?
+  birthDate    String?
+  notes        String?
+  loyaltyPoints Int          @default(0)
+  totalVisits  Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  appointments Appointment[]
+}
+
+model Service {
+  id         String        @id @default(cuid())
+  name       String
+  duration   Int           // in minutes
+  price      Float
+  commission Float         @default(50) // percentage
+  category   String        @default("corte") // corte, barba, combo, tratamento
+  active     Boolean       @default(true)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  appointments Appointment[]
+}
+
+model Barber {
+  id           String        @id @default(cuid())
+  name         String
+  phone        String?
+  email        String?
+  avatar       String?
+  specialties  String?
+  commission   Float         @default(50) // percentage
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  appointments Appointment[]
+  transactions Transaction[]
+}
+
+model Appointment {
+  id        String   @id @default(cuid())
+  date      String   // YYYY-MM-DD
+  time      String   // HH:MM
+  status    String   @default("pendente") // pendente, confirmado, cancelado, concluido
+  notes     String?
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id])
+  serviceId String
+  service   Service  @relation(fields: [serviceId], references: [id])
+  barberId  String
+  barber    Barber   @relation(fields: [barberId], references: [id])
+  price     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CashRegister {
+  id           String        @id @default(cuid())
+  date         String        @unique // YYYY-MM-DD
+  openingBalance Float       @default(0)
+  closingBalance Float?
+  status       String        @default("aberto") // aberto, fechado
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+}
+
+model Transaction {
+  id             String        @id @default(cuid())
+  type           String        // entrada, saida
+  category       String        // servico, produto, despesa, comissao, outros
+  description    String
+  amount         Float
+  paymentMethod  String?       // dinheiro, pix, cartao_credito, cartao_debito
+  cashRegisterId String?
+  cashRegister   CashRegister? @relation(fields: [cashRegisterId], references: [id])
+  barberId       String?
+  barber         Barber?       @relation(fields: [barberId], references: [id])
+  createdAt      DateTime      @default(now())
+}
+
+model Product {
+  id             String          @id @default(cuid())
+  name           String
+  description    String?
+  quantity       Int             @default(0)
+  minQuantity    Int             @default(5)
+  price          Float
+  category       String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  stockMovements StockMovement[]
+}
+
+model StockMovement {
+  id        String   @id @default(cuid())
+  type      String   // entrada, saida
+  quantity  Int
+  reason    String?
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+}
